@@ -384,7 +384,7 @@ export default function Home() {
             {[
               ["Free", "$0", "MVP demo", ["Watermarked demo exports", "Prompt generator", "Basic predictor"]],
               ["Basic", "$12/mo", "Checkout-ready", ["Stripe checkout route", "High-res downloads", "Rate-limited generations", "Provider env guards"]],
-              ["Pro", "$25/mo", "Provider-ready", ["Trend API scaffold", "Supabase project schema", "Creator style presets in UI", "Share links require persistence"]],
+              ["Pro", "$25/mo", "Provider-ready", ["Trend API scaffold", "Convex project schema", "Creator style presets in UI", "Share links require persistence"]],
             ].map(([name, price, tagline, features], index) => (
               <div key={name as string} className={`rounded-[1.75rem] border p-6 ${index === 2 ? "border-[#facc15] bg-[#facc15] text-zinc-950" : "border-white/10 bg-white/[0.045]"}`}>
                 <p className="text-sm font-black uppercase tracking-[0.16em] opacity-70">{name as string}</p>
@@ -400,7 +400,7 @@ export default function Home() {
         </section>
 
         <footer className="border-t border-white/10 py-8 text-sm text-white/45">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbAI. Next.js, Tailwind, Supabase schema, Stripe route, OpenAI image route.</p><p>Rate limits and provider guards scaffolded; auth/history need Supabase wiring.</p></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbAI. Next.js, Tailwind, Clerk auth, Convex schema, Stripe route, OpenAI image route.</p><p>Rate limits and provider guards scaffolded; auth/history use Clerk + Convex wiring.</p></div>
         </footer>
       </div>
     </main>
