@@ -18,13 +18,23 @@ export function ThumbnailCard({
       className="group relative aspect-video overflow-hidden rounded-3xl border border-white/10 shadow-2xl shadow-black/25"
       style={{ background: `linear-gradient(135deg, ${thumb.palette[0]}, ${thumb.palette[1]})` }}
     >
-      {thumb.imageUrl ? <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${thumb.imageUrl})` }} /> : null}
-      <div className="absolute inset-0 opacity-45 thumb-grid" />
-      <div
-        className="absolute -right-10 -top-10 h-44 w-44 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-125"
-        style={{ background: thumb.palette[2] }}
-      />
-      <div className="absolute -bottom-16 left-6 h-48 w-48 rounded-full blur-3xl" style={{ background: thumb.palette[1] }} />
+      {thumb.imageUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={thumb.imageUrl} alt="Generated thumbnail concept" className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/18 to-black/18" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_82%,rgba(0,0,0,0.58),transparent_36%)]" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 opacity-45 thumb-grid" />
+          <div
+            className="absolute -right-10 -top-10 h-44 w-44 rounded-full blur-2xl transition-transform duration-500 group-hover:scale-125"
+            style={{ background: thumb.palette[2] }}
+          />
+          <div className="absolute -bottom-16 left-6 h-48 w-48 rounded-full blur-3xl" style={{ background: thumb.palette[1] }} />
+        </>
+      )}
       <div className={`absolute rounded-full border border-white/25 bg-black/35 font-bold uppercase text-white backdrop-blur ${compact ? "left-4 top-4 px-2.5 py-1 text-[10px] tracking-[0.1em]" : "left-5 top-5 px-3 py-1 text-[11px] tracking-[0.14em]"}`}>
         {thumb.score}% signal
       </div>

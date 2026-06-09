@@ -51,18 +51,21 @@ export function StudioWorkspace() {
         body: JSON.stringify({ title, description, channel, keywords, variations: 6 }),
       });
       const data = await response.json();
-      const nextThumbs = data.thumbnails?.length ? data.thumbnails : generated;
+      const nextThumbs: Thumb[] = data.thumbnails?.length ? data.thumbnails : generated;
       setThumbs(nextThumbs);
       if (isSignedIn) {
-        await createProject({
+        createProject({
           title,
           description,
           channelName: channel,
           keywords: keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean),
           style: nextThumbs[0]?.style,
           trendPrompt: trendSignals.slice(0, 3).join("; "),
-          variations: nextThumbs,
-        });
+          variations: nextThumbs.map((thumb) => ({
+            ...thumb,
+            imageUrl: thumb.imageUrl?.startsWith("http") ? thumb.imageUrl : undefined,
+          })),
+        }).catch(() => undefined);
       }
     } catch {
       setThumbs(generated);
@@ -72,7 +75,7 @@ export function StudioWorkspace() {
     }
   }
 
-  function downloadActive() {
+  async function downloadActive() {
     if (!activeThumb) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -80,19 +83,55 @@ export function StudioWorkspace() {
     if (!ctx) return;
     canvas.width = 1280;
     canvas.height = 720;
-    const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
-    gradient.addColorStop(0, activeThumb.palette[0]);
-    gradient.addColorStop(1, activeThumb.palette[1]);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1280, 720);
-    ctx.fillStyle = activeThumb.palette[2];
-    ctx.beginPath();
-    ctx.arc(1050, 120, 190, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
-    for (let x = 0; x < 1280; x += 64) ctx.fillRect(x, 0, 2, 720);
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.fillRect(60, 500, 760, 120);
+
+    if (activeThumb.imageUrl) {
+      try {
+        const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = activeThumb.imageUrl || "";
+        });
+        const sourceRatio = image.width / image.height;
+        const targetRatio = canvas.width / canvas.height;
+        let sx = 0;
+        let sy = 0;
+        let sw = image.width;
+        let sh = image.height;
+        if (sourceRatio > targetRatio) {
+          sw = image.height * targetRatio;
+          sx = (image.width - sw) / 2;
+        } else {
+          sh = image.width / targetRatio;
+          sy = (image.height - sh) / 2;
+        }
+        ctx.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      } catch {
+        ctx.fillStyle = activeThumb.palette[0];
+        ctx.fillRect(0, 0, 1280, 720);
+      }
+      const vignette = ctx.createLinearGradient(0, 260, 0, 720);
+      vignette.addColorStop(0, "rgba(0,0,0,0.05)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.82)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, 1280, 720);
+    } else {
+      const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
+      gradient.addColorStop(0, activeThumb.palette[0]);
+      gradient.addColorStop(1, activeThumb.palette[1]);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 1280, 720);
+      ctx.fillStyle = activeThumb.palette[2];
+      ctx.beginPath();
+      ctx.arc(1050, 120, 190, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      for (let x = 0; x < 1280; x += 64) ctx.fillRect(x, 0, 2, 720);
+    }
+
+    ctx.fillStyle = "rgba(0,0,0,0.48)";
+    ctx.fillRect(52, 486, 820, 140);
     ctx.fillStyle = "#ffffff";
     ctx.font = "900 76px Arial";
     ctx.fillText((overlay || activeThumb.title).toUpperCase().slice(0, 26), 75, 570);
@@ -260,7 +299,7 @@ export function StudioWorkspace() {
                   Clean slate: no saved thumbnail projects yet.
                 </div>
               ) : (
-                history.slice(0, 4).map((project) => (
+                history.slice(0, 4).map((project: { _id: string; title: string; variations: unknown[]; createdAt: number }) => (
                   <div key={project._id} className="rounded-2xl border border-white/10 bg-black/20 p-3">
                     <p className="truncate text-sm font-black">{project.title}</p>
                     <p className="mt-1 text-xs text-white/45">

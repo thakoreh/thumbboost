@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const prompt = `Create a high-converting YouTube thumbnail for this video. Title: ${title}. Description: ${description}. Channel: ${channel}. Keywords/reference style: ${keywords}. Requirements: 16:9 YouTube thumbnail composition, vibrant creator style, bold readable text zone, emotional focal subject, high mobile contrast, safe zones, no logos, no copyrighted character likenesses, no unsafe content.`;
+  const prompt = `Create a premium, high-converting YouTube thumbnail BACKGROUND for this video. Title: ${title}. Description: ${description}. Channel: ${channel}. Keywords/reference style: ${keywords}. Requirements: professional creator thumbnail quality, vibrant cinematic lighting, strong emotional focal subject or clear product/evidence object, high mobile contrast, bold composition, clean lower-left text-safe zone for app overlay, 16:9 crop-safe layout, no words, no letters, no numbers, no logos, no watermarks, no UI screenshots unless requested, no copyrighted character likenesses, no unsafe content. The app will add headline text separately, so the image must look polished without embedded text.`;
   const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
   const size = model === "dall-e-3" ? "1792x1024" : "1536x1024";
 
