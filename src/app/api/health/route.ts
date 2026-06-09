@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
 
 export function GET() {
-  return NextResponse.json({ ok: true, service: "thumbai", ts: new Date().toISOString() });
+  return NextResponse.json({ ok: true, service: "thumbboost", ts: new Date().toISOString() });
 }

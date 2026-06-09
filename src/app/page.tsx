@@ -150,7 +150,7 @@ function ThumbnailCard({ thumb, overlay, watermark = false }: { thumb: Thumb; ov
       </div>
       {watermark && (
         <div className="absolute bottom-4 right-4 rounded-full border border-white/25 bg-black/45 px-3 py-1 text-xs font-bold text-white/80 backdrop-blur">
-          ThumbAI free
+          ThumbBoost free
         </div>
       )}
     </div>
@@ -229,9 +229,9 @@ export default function Home() {
     ctx.fillRect(1010, 650, 220, 38);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 22px Arial";
-    ctx.fillText("ThumbAI demo", 1030, 676);
+    ctx.fillText("ThumbBoost demo", 1030, 676);
     const link = document.createElement("a");
-    link.download = "thumbai-thumbnail.png";
+    link.download = "thumbboost-thumbnail.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
@@ -243,7 +243,7 @@ export default function Home() {
         <nav className="flex items-center justify-between rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 backdrop-blur-xl">
           <a href="#top" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#facc15] text-zinc-950"><Sparkle size={20} weight="fill" /></span>
-            <span className="text-lg font-black tracking-[-0.04em]">ThumbAI</span>
+            <span className="text-lg font-black tracking-[-0.04em]">ThumbBoost</span>
           </a>
           <div className="hidden items-center gap-6 text-sm font-semibold text-white/70 md:flex">
             <a href="#studio" className="hover:text-white">Studio</a>
@@ -256,26 +256,26 @@ export default function Home() {
         <section id="top" className="grid min-h-[86dvh] items-center gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-              <Lightning size={15} weight="fill" /> Trend-adaptive thumbnail generator
+              <Lightning size={15} weight="fill" /> YouTube packaging intelligence
             </div>
             <h1 className="max-w-4xl text-balance text-5xl font-black leading-[0.88] tracking-[-0.075em] md:text-7xl">
-              Turn video ideas into thumbnails creators can actually ship.
+              Find the thumbnail angle worth shipping before you publish.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/68">
-              Prompt-first SaaS studio for YouTube-style thumbnails: generate variations, edit text overlays, adapt to niche trends, predict click appeal, and export high-res PNGs.
+              ThumbBoost positions against generic AI image tools: analyze the title, niche, hook, and mobile-readability signals, then generate packaging variants built for creator CTR decisions.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a href="#studio" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#facc15] px-6 py-3 font-black text-zinc-950 transition hover:-translate-y-0.5 active:scale-[0.98]">
-                Open creator dashboard <ArrowRight size={18} weight="bold" />
+                Run packaging check <ArrowRight size={18} weight="bold" />
               </a>
               <a href="#examples" className="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3 font-bold text-white/85 transition hover:bg-white/10 active:scale-[0.98]">
                 View examples
               </a>
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">Demo</strong><span className="text-white/55">watermarked exports in MVP</span></div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">6</strong><span className="text-white/55">variations per prompt</span></div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">16:9</strong><span className="text-white/55">YouTube-ready canvas</span></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">Demo</strong><span className="text-white/55">free packaging check</span></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">6</strong><span className="text-white/55">CTR angles per idea</span></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">16:9</strong><span className="text-white/55">mobile-first canvas</span></div>
             </div>
           </div>
           <div className="relative">
@@ -305,7 +305,7 @@ export default function Home() {
               <label className="block"><span className="mb-2 block text-sm font-bold text-white/78">Keywords or reference style</span><input value={keywords} onChange={(e) => setKeywords(e.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm outline-none transition focus:border-[#facc15]" /></label>
               <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white/65"><UploadSimple size={17} /> Optional reference image</button>
               <button onClick={generate} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#facc15] px-5 py-4 font-black text-zinc-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]">
-                {loading ? "Queued generation..." : "Generate 6 thumbnails"} <ArrowRight size={18} weight="bold" />
+                {loading ? "Queued generation..." : "Generate 6 CTR angles"} <ArrowRight size={18} weight="bold" />
               </button>
             </div>
           </aside>
@@ -315,7 +315,7 @@ export default function Home() {
               <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Live previews</p>
-                  <h2 className="text-2xl font-black tracking-[-0.05em]">Gallery variations</h2>
+                  <h2 className="text-2xl font-black tracking-[-0.05em]">Packaging variations</h2>
                 </div>
                 <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/25 px-3 py-2 text-sm font-bold text-white/70"><ClockCounterClockwise size={16} /> Queue ready</div>
               </div>
@@ -356,8 +356,8 @@ export default function Home() {
         <section id="trends" className="grid gap-8 py-20 lg:grid-cols-[0.85fr_1.15fr]">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#facc15] px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-950"><TrendUp size={15} weight="fill" /> Data edge</div>
-            <h2 className="text-4xl font-black leading-none tracking-[-0.06em] md:text-5xl">Trend-adaptive generator, not another prompt wrapper.</h2>
-            <p className="mt-5 text-lg leading-8 text-white/62">ThumbAI can fetch YouTube trending data when a YouTube API key is configured, then use extracted title/trend signals to guide generation prompts. Manual thumbnail-set analysis is not implemented yet.</p>
+            <h2 className="text-4xl font-black leading-none tracking-[-0.06em] md:text-5xl">Positioned against Pikzels-style generators: intelligence first, pixels second.</h2>
+            <p className="mt-5 text-lg leading-8 text-white/62">Market research shows generic AI thumbnail generation is crowded. ThumbBoost narrows to YouTube packaging: title + thumbnail scoring, competitor-pattern prompts, mobile-safe layouts, and old-video revival workflows.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {trendSignals.map((signal, index) => (
@@ -371,7 +371,7 @@ export default function Home() {
 
         <section id="examples" className="py-8">
           <div className="mb-8 flex items-end justify-between gap-4">
-            <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Before / after</p><h2 className="text-4xl font-black tracking-[-0.06em]">Creator examples</h2></div>
+            <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-white/45">Positioning wedge</p><h2 className="text-4xl font-black tracking-[-0.06em]">CTR-first examples</h2></div>
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             {sampleThumbs.map((thumb, index) => <ThumbnailCard key={thumb.id} thumb={thumb} overlay={["boring AI video", "ship faster", "CTR teardown"][index]} />)}
@@ -379,12 +379,12 @@ export default function Home() {
         </section>
 
         <section id="pricing" className="py-20">
-          <div className="mx-auto max-w-2xl text-center"><h2 className="text-4xl font-black tracking-[-0.06em]">Freemium pricing built for creators.</h2><p className="mt-3 text-white/60">Stripe-ready checkout route included. Swap env price IDs to go live.</p></div>
+          <div className="mx-auto max-w-2xl text-center"><h2 className="text-4xl font-black tracking-[-0.06em]">Pricing anchored below full packaging suites.</h2><p className="mt-3 text-white/60">Pikzels sells AI packaging around $28-$56/mo annually and ThumbnailTest sells testing workflows. ThumbBoost starts cheaper as a focused packaging preflight.</p></div>
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {[
-              ["Free", "$0", "MVP demo", ["Watermarked demo exports", "Prompt generator", "Basic predictor"]],
-              ["Basic", "$12/mo", "Checkout-ready", ["Stripe checkout route", "High-res downloads", "Rate-limited generations", "Provider env guards"]],
-              ["Pro", "$25/mo", "Provider-ready", ["Trend API scaffold", "Convex project schema", "Creator style presets in UI", "Share links require persistence"]],
+              ["Free", "$0", "Packaging check", ["Watermarked demo exports", "Prompt + title score", "Mobile-readability predictor"]],
+              ["Creator", "$12/mo", "Preflight workflow", ["High-res downloads", "CTR angle variations", "Title + thumbnail heuristics", "Provider env guards"]],
+              ["Studio", "$25/mo", "Small team workflow", ["Trend API scaffold", "Convex project history", "Reusable creator style presets", "Share links require persistence"]],
             ].map(([name, price, tagline, features], index) => (
               <div key={name as string} className={`rounded-[1.75rem] border p-6 ${index === 2 ? "border-[#facc15] bg-[#facc15] text-zinc-950" : "border-white/10 bg-white/[0.045]"}`}>
                 <p className="text-sm font-black uppercase tracking-[0.16em] opacity-70">{name as string}</p>
@@ -400,7 +400,7 @@ export default function Home() {
         </section>
 
         <footer className="border-t border-white/10 py-8 text-sm text-white/45">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbAI. Next.js, Tailwind, Clerk auth, Convex schema, Stripe route, OpenAI image route.</p><p>Rate limits and provider guards scaffolded; auth/history use Clerk + Convex wiring.</p></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbBoost. YouTube packaging intelligence for creators and small channels.</p><p>Clerk, Convex, Stripe, and AI provider guards are scaffolded for production wiring.</p></div>
         </footer>
       </div>
     </main>

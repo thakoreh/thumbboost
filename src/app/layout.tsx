@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ThumbAI - AI YouTube Thumbnail Generator",
+  title: "ThumbBoost - YouTube Packaging Intelligence",
   description:
-    "Trend-adaptive SaaS thumbnail generator for creators. Generate, edit, score, and export YouTube thumbnails with AI.",
+    "CTR-focused thumbnail and title packaging preflight for YouTube creators. Score ideas, generate mobile-first variants, and ship stronger videos.",
   openGraph: {
-    title: "ThumbAI - AI YouTube Thumbnail Generator",
+    title: "ThumbBoost - YouTube Packaging Intelligence",
     description:
-      "Create vibrant YouTube thumbnails with AI, trend signals, quick editing, and high-res exports.",
+      "Score YouTube packaging ideas, generate CTR-focused thumbnail variants, and export mobile-first creator thumbnails.",
     type: "website",
   },
 };
