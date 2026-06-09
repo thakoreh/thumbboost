@@ -13,7 +13,7 @@ export default defineSchema({
     stripeSubscriptionId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_clerk_user_id", ["clerkUserId"]).index("by_email", ["email"]),
+  }).index("by_clerk_user_id", ["clerkUserId"]).index("by_email", ["email"]).index("by_stripe_customer_id", ["stripeCustomerId"]),
 
   thumbnailProjects: defineTable({
     userId: v.id("users"),

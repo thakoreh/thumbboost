@@ -1,6 +1,10 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { SignInButton, SignUpButton, Show, UserButton, useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { plans } from "@/lib/plans";
 import {
   ArrowRight,
   ChartLineUp,
@@ -23,6 +27,7 @@ type Thumb = {
   palette: string[];
   score: number;
   style: string;
+  imageUrl?: string;
   accent: string;
 };
 
@@ -157,7 +162,31 @@ function ThumbnailCard({ thumb, overlay, watermark = false }: { thumb: Thumb; ov
   );
 }
 
+function AuthControls() {
+  return (
+    <div className="flex items-center gap-2">
+      <Show when="signed-out">
+        <SignInButton mode="modal">
+          <button className="rounded-full border border-white/15 px-4 py-2 text-sm font-bold text-white/80 transition hover:bg-white/10">Sign in</button>
+        </SignInButton>
+        <SignUpButton mode="modal">
+          <button className="rounded-full bg-white px-4 py-2 text-sm font-black text-zinc-950 transition active:scale-[0.98]">Start free</button>
+        </SignUpButton>
+      </Show>
+      <Show when="signed-in">
+        <a href="#studio" className="hidden rounded-full bg-[#facc15] px-4 py-2 text-sm font-black text-zinc-950 sm:inline-flex">Studio</a>
+        <UserButton />
+      </Show>
+    </div>
+  );
+}
+
 export default function Home() {
+  const { isSignedIn } = useUser();
+  const ensureCurrentUser = useMutation(api.users.ensureCurrentUser);
+  const createProject = useMutation(api.thumbnails.createProject);
+  const history = useQuery(api.thumbnails.listMine);
+  const currentUser = useQuery(api.users.getCurrentUser);
   const [title, setTitle] = useState("I Let AI Build My Startup for 24 Hours");
   const [description, setDescription] = useState("A fast-paced creator video comparing AI agents, cost, mistakes, and the final working product.");
   const [channel, setChannel] = useState("Hiren Ships");
@@ -167,6 +196,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [thumbs, setThumbs] = useState<Thumb[]>(sampleThumbs);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (isSignedIn) ensureCurrentUser().catch(() => undefined);
+  }, [ensureCurrentUser, isSignedIn]);
 
   const predictor = useMemo(() => scorePrompt(title, description, keywords), [title, description, keywords]);
   const activeThumb = thumbs[selected] || thumbs[0];
@@ -181,10 +214,18 @@ export default function Home() {
         body: JSON.stringify({ title, description, channel, keywords, variations: 6 }),
       });
       const data = await response.json();
-      if (data.thumbnails?.length) {
-        setThumbs(data.thumbnails);
-      } else {
-        setThumbs(generated);
+      const nextThumbs = data.thumbnails?.length ? data.thumbnails : generated;
+      setThumbs(nextThumbs);
+      if (isSignedIn) {
+        await createProject({
+          title,
+          description,
+          channelName: channel,
+          keywords: keywords.split(",").map((keyword) => keyword.trim()).filter(Boolean),
+          style: nextThumbs[0]?.style,
+          trendPrompt: trendSignals.slice(0, 3).join("; "),
+          variations: nextThumbs,
+        });
       }
     } catch {
       setThumbs(generated);
@@ -229,7 +270,7 @@ export default function Home() {
     ctx.fillRect(1010, 650, 220, 38);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 22px Arial";
-    ctx.fillText("ThumbBoost demo", 1030, 676);
+    ctx.fillText(currentUser?.plan === "free" ? "ThumbBoost free" : "ThumbBoost", 1030, 676);
     const link = document.createElement("a");
     link.download = "thumbboost-thumbnail.png";
     link.href = canvas.toDataURL("image/png");
@@ -250,7 +291,7 @@ export default function Home() {
             <a href="#trends" className="hover:text-white">Trends</a>
             <a href="#pricing" className="hover:text-white">Pricing</a>
           </div>
-          <a href="#studio" className="rounded-full bg-white px-4 py-2 text-sm font-bold text-zinc-950 transition active:scale-[0.98]">Generate</a>
+          <AuthControls />
         </nav>
 
         <section id="top" className="grid min-h-[86dvh] items-center gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr]">
@@ -273,7 +314,7 @@ export default function Home() {
               </a>
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">Demo</strong><span className="text-white/55">free packaging check</span></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">5 free</strong><span className="text-white/55">monthly thumbnails</span></div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">6</strong><span className="text-white/55">CTR angles per idea</span></div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">16:9</strong><span className="text-white/55">mobile-first canvas</span></div>
             </div>
@@ -349,6 +390,13 @@ export default function Home() {
                 <div className="text-5xl font-black tracking-[-0.06em]">{predictor}%</div>
                 <p className="mt-2 text-sm leading-6 text-white/58">Heuristic score from title length, numeric hook, curiosity words, and niche specificity.</p>
               </div>
+              <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
+                <div className="mb-3 flex items-center gap-2"><ClockCounterClockwise className="text-[#facc15]" size={20} weight="fill" /><h3 className="font-black">Your history</h3></div>
+                <p className="text-sm text-white/55">{currentUser ? `${currentUser.plan.toUpperCase()} plan · ${currentUser.thumbnailsThisMonth} thumbnails this month` : "Sign up to save every generation."}</p>
+                <div className="mt-4 space-y-3">
+                  {history === undefined ? <div className="h-16 animate-pulse rounded-2xl bg-white/10" /> : history.length === 0 ? <div className="rounded-2xl border border-dashed border-white/15 p-4 text-sm font-semibold text-white/55">Clean slate: no saved thumbnail projects yet.</div> : history.slice(0, 4).map((project) => <div key={project._id} className="rounded-2xl border border-white/10 bg-black/20 p-3"><p className="truncate text-sm font-black">{project.title}</p><p className="mt-1 text-xs text-white/45">{project.variations.length} variants · {new Date(project.createdAt).toLocaleDateString()}</p></div>)}
+                </div>
+              </div>
             </aside>
           </div>
         </section>
@@ -381,26 +429,23 @@ export default function Home() {
         <section id="pricing" className="py-20">
           <div className="mx-auto max-w-2xl text-center"><h2 className="text-4xl font-black tracking-[-0.06em]">Pricing anchored below full packaging suites.</h2><p className="mt-3 text-white/60">Pikzels sells AI packaging around $28-$56/mo annually and ThumbnailTest sells testing workflows. ThumbBoost starts cheaper as a focused packaging preflight.</p></div>
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {[
-              ["Free", "$0", "Packaging check", ["Watermarked demo exports", "Prompt + title score", "Mobile-readability predictor"]],
-              ["Creator", "$12/mo", "Preflight workflow", ["High-res downloads", "CTR angle variations", "Title + thumbnail heuristics", "Provider env guards"]],
-              ["Studio", "$25/mo", "Small team workflow", ["Trend API scaffold", "Convex project history", "Reusable creator style presets", "Share links require persistence"]],
-            ].map(([name, price, tagline, features], index) => (
-              <div key={name as string} className={`rounded-[1.75rem] border p-6 ${index === 2 ? "border-[#facc15] bg-[#facc15] text-zinc-950" : "border-white/10 bg-white/[0.045]"}`}>
-                <p className="text-sm font-black uppercase tracking-[0.16em] opacity-70">{name as string}</p>
-                <div className="mt-3 text-4xl font-black tracking-[-0.06em]">{price as string}</div>
-                <p className="mt-2 font-bold opacity-70">{tagline as string}</p>
+            {plans.map((plan) => (
+              <div key={plan.id} className={`rounded-[1.75rem] border p-6 ${plan.id === "pro" ? "border-[#facc15] bg-[#facc15] text-zinc-950" : "border-white/10 bg-white/[0.045]"}`}>
+                <p className="text-sm font-black uppercase tracking-[0.16em] opacity-70">{plan.name}</p>
+                <div className="mt-3 text-4xl font-black tracking-[-0.06em]">${plan.price}{plan.price ? <span className="text-base">/mo</span> : null}</div>
+                <p className="mt-2 font-bold opacity-70">{plan.headline}</p>
+                <p className="mt-3 rounded-full border border-current/20 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] opacity-75">{plan.limitLabel}</p>
                 <div className="mt-6 space-y-3">
-                  {(features as string[]).map((feature) => <div key={feature} className="flex items-center gap-2 text-sm font-bold"><Check size={16} weight="bold" /> {feature}</div>)}
+                  {plan.features.map((feature) => <div key={feature} className="flex items-center gap-2 text-sm font-bold"><Check size={16} weight="bold" /> {feature}</div>)}
                 </div>
-                <button className={`mt-6 w-full rounded-2xl px-4 py-3 font-black transition active:scale-[0.98] ${index === 2 ? "bg-zinc-950 text-white" : "bg-white text-zinc-950"}`}>Start {name as string}</button>
+                {plan.price ? <a href={`/api/stripe/checkout?plan=${plan.id}`} className={`mt-6 flex w-full justify-center rounded-2xl px-4 py-3 font-black transition active:scale-[0.98] ${plan.id === "pro" ? "bg-zinc-950 text-white" : "bg-white text-zinc-950"}`}>Start {plan.name}</a> : <SignUpButton mode="modal"><button className="mt-6 w-full rounded-2xl bg-white px-4 py-3 font-black text-zinc-950 transition active:scale-[0.98]">Start Free</button></SignUpButton>}
               </div>
             ))}
           </div>
         </section>
 
         <footer className="border-t border-white/10 py-8 text-sm text-white/45">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbBoost. YouTube packaging intelligence for creators and small channels.</p><p>Clerk, Convex, Stripe, and AI provider guards are scaffolded for production wiring.</p></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbBoost. YouTube packaging intelligence for creators and small channels.</p><p>Clerk auth, Convex history, Stripe billing, and AI provider guards are wired for launch.</p></div>
         </footer>
       </div>
     </main>
