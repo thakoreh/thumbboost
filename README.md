@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ThumbAI
 
-## Getting Started
+Sleek SaaS thumbnail generator MVP for creator thumbnails.
 
-First, run the development server:
+## Stack
+- Next.js 16 App Router + TypeScript
+- Tailwind CSS v4
+- Supabase scaffold for auth, usage, projects/history
+- Stripe checkout route for Basic and Pro subscriptions
+- OpenAI DALL-E 3 route with mock fallback when no API key is set
+- YouTube trending route with mock fallback when no API key is set
 
+## Implemented
+- Prompt-first creator dashboard
+- Inputs: video title, description, channel name, keywords/reference style, reference-image placeholder
+- AI generation API route: `/api/generate`
+- 6 variation gallery with loading state
+- In-app quick editor for overlay text and font preset controls
+- Canvas PNG export at 1280x720
+- Freemium pricing: free 5/mo watermarked, $12/mo Basic, $25/mo Pro
+- Trend-adaptive section and `/api/trends` scaffold
+- Performance predictor heuristic
+- Rate limit helper for generation/trends
+- Supabase schema snippet in `src/lib/supabase.ts`
+- Stripe checkout API route: `/api/checkout`
+
+## Local run
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Production wiring
+1. Supabase: create project, enable auth, run the SQL in `src/lib/supabase.ts`.
+2. Stripe: create Basic $12/mo and Pro $25/mo prices, set env price IDs.
+3. OpenAI: set `OPENAI_API_KEY` for DALL-E 3 generation.
+4. YouTube: set `YOUTUBE_API_KEY` for real trending signals.
+5. Add a Stripe webhook route before real payments are accepted.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Verification
+```bash
+npm run lint
+npm run build
+```
