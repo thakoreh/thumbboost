@@ -13,7 +13,7 @@ const fallbackPalettes = [
 
 function mockThumbs(title: string, channel: string, keywords: string) {
   return fallbackPalettes.map((palette, index) => ({
-    id: `mock-${Date.now()}-${index}`,
+    id: `fallback-${Date.now()}-${index}`,
     title: title || "Viral creator thumbnail",
     subtitle: channel || keywords || "Trend-adaptive preview",
     palette,
@@ -21,6 +21,12 @@ function mockThumbs(title: string, channel: string, keywords: string) {
     style: ["Shock proof", "Tech tutorial", "Before-after", "Premium clean", "Experiment lab", "Warm viral"][index],
     accent: ["Arrow callout", "Split proof", "Glow cutout", "Big numeric hook", "Face-safe zone", "Mobile contrast"][index],
   }));
+}
+
+function imageUrlFromResult(image: { url?: string | null; b64_json?: string | null } | undefined) {
+  if (image?.url) return image.url;
+  if (image?.b64_json) return `data:image/png;base64,${image.b64_json}`;
+  return undefined;
 }
 
 export async function POST(request: NextRequest) {
@@ -38,32 +44,44 @@ export async function POST(request: NextRequest) {
   const variations = Math.min(Number(body.variations || 4), 6);
 
   if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ ok: true, provider: "mock", thumbnails: mockThumbs(title, channel, keywords).slice(0, variations) });
+    return NextResponse.json({ ok: true, provider: "fallback", thumbnails: mockThumbs(title, channel, keywords).slice(0, variations) });
   }
 
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const prompt = `Create a high-converting YouTube thumbnail concept for this video. Title: ${title}. Description: ${description}. Channel: ${channel}. Keywords/reference style: ${keywords}. Style: vibrant creator thumbnail, bold readable text zone, emotional focal subject, high mobile contrast, no unsafe content.`;
+  const prompt = `Create a high-converting YouTube thumbnail for this video. Title: ${title}. Description: ${description}. Channel: ${channel}. Keywords/reference style: ${keywords}. Requirements: 16:9 YouTube thumbnail composition, vibrant creator style, bold readable text zone, emotional focal subject, high mobile contrast, safe zones, no logos, no copyrighted character likenesses, no unsafe content.`;
+  const model = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+  const size = model === "dall-e-3" ? "1792x1024" : "1536x1024";
 
-  const images = [];
-  for (let i = 0; i < variations; i += 1) {
-    const result = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `${prompt} Variation ${i + 1}: distinct composition and palette.`,
-      size: "1792x1024",
-      quality: "standard",
-      n: 1,
-    });
-    images.push({
-      id: `openai-${Date.now()}-${i}`,
-      imageUrl: result.data?.[0]?.url,
-      title,
-      subtitle: channel,
-      palette: fallbackPalettes[i % fallbackPalettes.length],
-      score: Math.min(97, 82 + i * 2),
-      style: "DALL-E 3 generated",
-      accent: "AI image",
+  try {
+    const images = [];
+    for (let i = 0; i < variations; i += 1) {
+      const result = await openai.images.generate({
+        model,
+        prompt: `${prompt} Variation ${i + 1}: distinct composition and palette.`,
+        size,
+        n: 1,
+      });
+      images.push({
+        id: `openai-${Date.now()}-${i}`,
+        imageUrl: imageUrlFromResult(result.data?.[0]),
+        title,
+        subtitle: channel,
+        palette: fallbackPalettes[i % fallbackPalettes.length],
+        score: Math.min(97, 82 + i * 2),
+        style: `${model} generated`,
+        accent: "AI image",
+      });
+    }
+
+    return NextResponse.json({ ok: true, provider: "openai", model, thumbnails: images });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "image_generation_failed";
+    console.error("openai_image_generation_failed", message);
+    return NextResponse.json({
+      ok: true,
+      provider: "fallback",
+      fallbackReason: "openai_image_generation_failed",
+      thumbnails: mockThumbs(title, channel, keywords).slice(0, variations),
     });
   }
-
-  return NextResponse.json({ ok: true, provider: "openai", thumbnails: images });
 }
