@@ -5,7 +5,7 @@ Sleek SaaS thumbnail generator MVP for creator thumbnails.
 ## Stack
 - Next.js 16 App Router + TypeScript
 - Tailwind CSS v4
-- Supabase scaffold for auth, usage, projects/history
+- Supabase scaffold for auth, usage, projects/history schema
 - Stripe checkout route for Basic and Pro subscriptions
 - OpenAI DALL-E 3 route with mock fallback when no API key is set
 - YouTube trending route with mock fallback when no API key is set
@@ -16,9 +16,9 @@ Sleek SaaS thumbnail generator MVP for creator thumbnails.
 - AI generation API route: `/api/generate`
 - 6 variation gallery with loading state
 - In-app quick editor for overlay text and font preset controls
-- Canvas PNG export at 1280x720
-- Freemium pricing: free 5/mo watermarked, $12/mo Basic, $25/mo Pro
-- Trend-adaptive section and `/api/trends` scaffold
+- Canvas PNG export at 1280x720 with demo watermark
+- Freemium pricing model displayed: free MVP demo, $12/mo Basic checkout-ready, $25/mo Pro provider-ready
+- Trend-adaptive section and `/api/trends` scaffold; YouTube API support when `YOUTUBE_API_KEY` is set
 - Performance predictor heuristic
 - Rate limit helper for generation/trends
 - Supabase schema snippet in `src/lib/supabase.ts`

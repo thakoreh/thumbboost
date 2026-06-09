@@ -225,6 +225,11 @@ export default function Home() {
     ctx.fillStyle = "#111827";
     ctx.font = "900 28px Arial";
     ctx.fillText(`${activeThumb.score}% CTR`, 92, 108);
+    ctx.fillStyle = "rgba(0,0,0,0.42)";
+    ctx.fillRect(1010, 650, 220, 38);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 22px Arial";
+    ctx.fillText("ThumbAI demo", 1030, 676);
     const link = document.createElement("a");
     link.download = "thumbai-thumbnail.png";
     link.href = canvas.toDataURL("image/png");
@@ -268,7 +273,7 @@ export default function Home() {
               </a>
             </div>
             <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">5</strong><span className="text-white/55">free watermarked exports/mo</span></div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">Demo</strong><span className="text-white/55">watermarked exports in MVP</span></div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">6</strong><span className="text-white/55">variations per prompt</span></div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4"><strong className="block text-2xl text-white">16:9</strong><span className="text-white/55">YouTube-ready canvas</span></div>
             </div>
@@ -352,7 +357,7 @@ export default function Home() {
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-[#facc15] px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-950"><TrendUp size={15} weight="fill" /> Data edge</div>
             <h2 className="text-4xl font-black leading-none tracking-[-0.06em] md:text-5xl">Trend-adaptive generator, not another prompt wrapper.</h2>
-            <p className="mt-5 text-lg leading-8 text-white/62">ThumbAI can ingest YouTube trending data or a manual thumbnail set, extract palette, text density, focal subjects, and composition rules, then adapt generations to the niche.</p>
+            <p className="mt-5 text-lg leading-8 text-white/62">ThumbAI can fetch YouTube trending data when a YouTube API key is configured, then use extracted title/trend signals to guide generation prompts. Manual thumbnail-set analysis is not implemented yet.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {trendSignals.map((signal, index) => (
@@ -377,9 +382,9 @@ export default function Home() {
           <div className="mx-auto max-w-2xl text-center"><h2 className="text-4xl font-black tracking-[-0.06em]">Freemium pricing built for creators.</h2><p className="mt-3 text-white/60">Stripe-ready checkout route included. Swap env price IDs to go live.</p></div>
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {[
-              ["Free", "$0", "5 thumbnails/mo", ["Watermarked exports", "Prompt generator", "Basic predictor"]],
-              ["Basic", "$12/mo", "Unlimited basic", ["No watermark", "Unlimited thumbnails", "High-res downloads", "Queue priority"]],
-              ["Pro", "$25/mo", "Styles and history", ["Trend-adaptive analysis", "Project history", "Shareable links", "Creator style presets"]],
+              ["Free", "$0", "MVP demo", ["Watermarked demo exports", "Prompt generator", "Basic predictor"]],
+              ["Basic", "$12/mo", "Checkout-ready", ["Stripe checkout route", "High-res downloads", "Rate-limited generations", "Provider env guards"]],
+              ["Pro", "$25/mo", "Provider-ready", ["Trend API scaffold", "Supabase project schema", "Creator style presets in UI", "Share links require persistence"]],
             ].map(([name, price, tagline, features], index) => (
               <div key={name as string} className={`rounded-[1.75rem] border p-6 ${index === 2 ? "border-[#facc15] bg-[#facc15] text-zinc-950" : "border-white/10 bg-white/[0.045]"}`}>
                 <p className="text-sm font-black uppercase tracking-[0.16em] opacity-70">{name as string}</p>
@@ -395,7 +400,7 @@ export default function Home() {
         </section>
 
         <footer className="border-t border-white/10 py-8 text-sm text-white/45">
-          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbAI. Next.js, Tailwind, Supabase, Stripe, OpenAI image route.</p><p>Auth, billing, queue, rate limits scaffolded.</p></div>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row"><p>ThumbAI. Next.js, Tailwind, Supabase schema, Stripe route, OpenAI image route.</p><p>Rate limits and provider guards scaffolded; auth/history need Supabase wiring.</p></div>
         </footer>
       </div>
     </main>
