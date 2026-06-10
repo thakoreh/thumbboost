@@ -14,6 +14,7 @@ import {
   PaintBrush,
 } from "@phosphor-icons/react";
 import { api } from "../../convex/_generated/api";
+import { generationButtonLabel, generationProgressNotice } from "@/lib/generation-status";
 import { makeThumbs, sampleThumbs, scorePrompt, trendSignals, type Thumb } from "@/lib/thumbboost-content";
 import { shouldWatermarkExport } from "@/lib/plans";
 import { ThumbnailCard } from "@/components/thumbnail-card";
@@ -40,6 +41,7 @@ export function StudioWorkspace() {
   const [selectedFont, setSelectedFont] = useState("Impact");
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [generationElapsed, setGenerationElapsed] = useState(0);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [generationNotice, setGenerationNotice] = useState<string | null>(null);
   const [thumbs, setThumbs] = useState<Thumb[]>(sampleThumbs);
@@ -49,13 +51,24 @@ export function StudioWorkspace() {
     if (isSignedIn) ensureCurrentUser().catch(() => undefined);
   }, [ensureCurrentUser, isSignedIn]);
 
+  useEffect(() => {
+    if (!loading) return;
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      setGenerationElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [loading]);
+
   const predictor = useMemo(() => scorePrompt(title, description, keywords), [title, description, keywords]);
   const activeThumb = thumbs[selected] || thumbs[0];
   const overlayWordCount = overlay.trim().split(/\s+/).filter(Boolean).length;
   const overlayWarning = overlayWordCount > 6 ? "Keep overlay text to 1-4 words for mobile CTR." : "Overlay length is mobile-friendly.";
+  const progressNotice = loading ? generationProgressNotice(generationElapsed) : null;
 
   async function generate() {
     if (![title, description, keywords].some((value) => value.trim().length > 0)) return;
+    setGenerationElapsed(0);
     setLoading(true);
     setGenerationError(null);
     setGenerationNotice(null);
@@ -236,11 +249,15 @@ export function StudioWorkspace() {
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#facc15] px-5 py-4 font-black text-zinc-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
           >
-            {loading ? "Queued generation..." : isSignedIn ? "Generate 6 CTR angles" : "Generate 1 free angle"} <ArrowRight size={18} weight="bold" />
+            {loading ? generationButtonLabel(generationElapsed) : isSignedIn ? "Generate 6 CTR angles" : "Generate 1 free angle"} <ArrowRight size={18} weight="bold" />
           </button>
           {generationError ? (
             <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-bold leading-5 text-red-100">
               {generationError}
+            </div>
+          ) : progressNotice ? (
+            <div className="rounded-2xl border border-sky-300/25 bg-sky-400/10 px-4 py-3 text-sm font-bold leading-5 text-sky-100">
+              {progressNotice}
             </div>
           ) : generationNotice ? (
             <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm font-bold leading-5 text-emerald-100">
