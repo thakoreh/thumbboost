@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -30,8 +31,9 @@ function imageUrlFromResult(image: { url?: string | null; b64_json?: string | nu
 }
 
 export async function POST(request: NextRequest) {
+  const { userId } = await auth();
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "local";
-  const limit = rateLimit(`generate:${ip}`, 10, 60 * 60 * 1000);
+  const limit = rateLimit(`generate:${userId || ip}`, userId ? 20 : 3, 60 * 60 * 1000);
   if (!limit.ok) {
     return NextResponse.json({ ok: false, error: "rate_limited", resetAt: limit.resetAt }, { status: 429 });
   }
@@ -41,7 +43,11 @@ export async function POST(request: NextRequest) {
   const description = String(body.description || "").slice(0, 800);
   const channel = String(body.channel || "").slice(0, 80);
   const keywords = String(body.keywords || "").slice(0, 220);
-  const variations = Math.min(Number(body.variations || 4), 6);
+  if (![title, description, keywords].some((value) => value.trim().length > 0)) {
+    return NextResponse.json({ ok: false, error: "missing_video_context" }, { status: 400 });
+  }
+  const requestedVariations = Math.min(Math.max(Number(body.variations || 4), 1), 6);
+  const variations = userId ? requestedVariations : Math.min(requestedVariations, 1);
 
   if (!process.env.OPENAI_API_KEY) {
     return NextResponse.json({ ok: true, provider: "fallback", thumbnails: mockThumbs(title, channel, keywords).slice(0, variations) });

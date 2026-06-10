@@ -4,11 +4,13 @@ import type { Thumb } from "@/lib/thumbboost-content";
 export function ThumbnailCard({
   thumb,
   overlay,
+  fontFamily = "Impact",
   watermark = false,
   compact = false,
 }: {
   thumb: Thumb;
   overlay: string;
+  fontFamily?: string;
   watermark?: boolean;
   compact?: boolean;
 }) {
@@ -51,6 +53,7 @@ export function ThumbnailCard({
           className={`max-w-[84%] text-balance font-black uppercase leading-[0.9] text-white drop-shadow-[0_4px_16px_rgba(0,0,0,0.75)] ${
             compact ? "text-lg md:text-xl" : "text-3xl md:text-4xl"
           }`}
+          style={{ fontFamily }}
         >
           {overlay || thumb.title}
         </h3>

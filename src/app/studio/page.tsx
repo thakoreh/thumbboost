@@ -23,7 +23,7 @@ export default function StudioPage() {
             </div>
             <div className="flex max-w-sm items-start gap-3 rounded-3xl border border-white/10 bg-white/[0.05] p-4 text-sm leading-6 text-white/65">
               <ShieldIcon size={22} className="mt-0.5 shrink-0 text-[#facc15]" />
-              Free previews use guarded mock output when provider keys are not configured, so the workflow stays testable in production.
+              We generate the visual concept first, then render editable overlay text separately so exports stay readable and brand-safe.
             </div>
           </div>
           <StudioWorkspace />

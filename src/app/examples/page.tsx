@@ -21,7 +21,7 @@ export default function ExamplesPage() {
             </p>
           </div>
           <div className="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm">
-            <ThumbnailCard thumb={sampleThumbs[0]} overlay="AI built my startup" />
+            <ThumbnailCard thumb={sampleThumbs[0]} overlay="AI built my startup" fontFamily="Impact, Arial Black, sans-serif" />
           </div>
         </div>
       </section>
@@ -30,7 +30,7 @@ export default function ExamplesPage() {
         <div className="grid gap-5 lg:grid-cols-3">
           {caseStudies.map((study) => (
             <article key={study.title} className="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm">
-              <ThumbnailCard thumb={study.thumb} overlay={study.overlay} compact />
+              <ThumbnailCard thumb={study.thumb} overlay={study.overlay} fontFamily="Impact, Arial Black, sans-serif" compact />
               <div className="p-4">
                 <p className="text-sm font-black uppercase tracking-[0.14em] text-zinc-500">{study.title}</p>
                 <h2 className="mt-2 text-2xl font-black tracking-tight">{study.subtitle}</h2>

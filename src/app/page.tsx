@@ -64,10 +64,10 @@ export default function Home() {
           <div className="relative min-h-[520px]">
             <div className="absolute -inset-8 rounded-[3rem] bg-[#facc15]/10 blur-3xl" />
             <div className="relative rounded-[2rem] border border-white/12 bg-white/[0.07] p-3 shadow-2xl backdrop-blur-2xl">
-              <ThumbnailCard thumb={sampleThumbs[0]} overlay="AI built my startup" />
+              <ThumbnailCard thumb={sampleThumbs[0]} overlay="AI built my startup" fontFamily="Impact, Arial Black, sans-serif" />
               <div className="mt-3 hidden grid-cols-2 gap-3 sm:grid">
                 {sampleThumbs.slice(1).map((thumb) => (
-                  <ThumbnailCard key={thumb.id} thumb={thumb} overlay={thumb.id === "sample-2" ? "ship faster" : "CTR teardown"} compact />
+                  <ThumbnailCard key={thumb.id} thumb={thumb} overlay={thumb.id === "sample-2" ? "ship faster" : "CTR teardown"} fontFamily="Impact, Arial Black, sans-serif" compact />
                 ))}
               </div>
             </div>
@@ -149,7 +149,7 @@ export default function Home() {
         <div className="grid gap-5 lg:grid-cols-3">
           {caseStudies.map((study) => (
             <article key={study.title} className="rounded-3xl border border-zinc-200 bg-white p-3 shadow-sm">
-              <ThumbnailCard thumb={study.thumb} overlay={study.overlay} compact />
+              <ThumbnailCard thumb={study.thumb} overlay={study.overlay} fontFamily="Impact, Arial Black, sans-serif" compact />
               <div className="p-4">
                 <h3 className="text-xl font-black tracking-tight">{study.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-zinc-600">{study.result}</p>

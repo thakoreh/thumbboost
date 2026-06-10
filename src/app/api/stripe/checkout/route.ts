@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
   }
 
   const { userId } = await auth();
+  if (!userId) {
+    const redirectUrl = new URL("/sign-in", request.url);
+    redirectUrl.searchParams.set("redirect_url", `/api/stripe/checkout?plan=${plan.id}`);
+    return NextResponse.redirect(redirectUrl, 307);
+  }
   const user = await currentUser().catch(() => null);
   const email = user?.emailAddresses?.[0]?.emailAddress;
   const origin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
@@ -31,7 +36,8 @@ export async function GET(request: NextRequest) {
     success_url: `${origin}/?checkout=success&plan=${plan.id}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/?checkout=cancelled&plan=${plan.id}`,
     customer_email: email,
-    metadata: { product: "thumbboost", appPlan: plan.id, clerkUserId: userId ?? "", email: email ?? "" },
+    client_reference_id: userId,
+    metadata: { product: "thumbboost", appPlan: plan.id, clerkUserId: userId, email: email ?? "" },
     subscription_data: { metadata: { product: "thumbboost", appPlan: plan.id, clerkUserId: userId ?? "", email: email ?? "" } },
   });
 

@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   const convex = convexClient();
+  if (!convex) return NextResponse.json({ ok: false, error: "convex_not_configured" }, { status: 503 });
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;

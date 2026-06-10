@@ -17,6 +17,12 @@ import { makeThumbs, sampleThumbs, scorePrompt, trendSignals, type Thumb } from 
 import { ThumbnailCard } from "@/components/thumbnail-card";
 
 const fontPresets = ["Impact", "Anton", "Bebas", "Geist"];
+const canvasFontMap: Record<string, string> = {
+  Impact: "Impact, Arial Black, sans-serif",
+  Anton: "Anton, Impact, Arial Black, sans-serif",
+  Bebas: "Bebas Neue, Impact, Arial Black, sans-serif",
+  Geist: "Geist, Arial, sans-serif",
+};
 
 export function StudioWorkspace() {
   const { isSignedIn } = useUser();
@@ -29,6 +35,7 @@ export function StudioWorkspace() {
   const [channel, setChannel] = useState("Hiren Ships");
   const [keywords, setKeywords] = useState("AI agents, SaaS, challenge, viral");
   const [overlay, setOverlay] = useState("AI built my startup");
+  const [selectedFont, setSelectedFont] = useState("Impact");
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);
   const [thumbs, setThumbs] = useState<Thumb[]>(sampleThumbs);
@@ -40,8 +47,11 @@ export function StudioWorkspace() {
 
   const predictor = useMemo(() => scorePrompt(title, description, keywords), [title, description, keywords]);
   const activeThumb = thumbs[selected] || thumbs[0];
+  const overlayWordCount = overlay.trim().split(/\s+/).filter(Boolean).length;
+  const overlayWarning = overlayWordCount > 6 ? "Keep overlay text to 1-4 words for mobile CTR." : "Overlay length is mobile-friendly.";
 
   async function generate() {
+    if (![title, description, keywords].some((value) => value.trim().length > 0)) return;
     setLoading(true);
     const generated = makeThumbs(title, channel, keywords);
     try {
@@ -133,9 +143,9 @@ export function StudioWorkspace() {
     ctx.fillStyle = "rgba(0,0,0,0.48)";
     ctx.fillRect(52, 486, 820, 140);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 76px Arial";
+    ctx.font = `900 76px ${canvasFontMap[selectedFont] || canvasFontMap.Impact}`;
     ctx.fillText((overlay || activeThumb.title).toUpperCase().slice(0, 26), 75, 570);
-    ctx.font = "700 34px Arial";
+    ctx.font = `700 34px ${canvasFontMap.Geist}`;
     ctx.fillText(activeThumb.subtitle.slice(0, 36), 80, 620);
     ctx.fillStyle = activeThumb.palette[2];
     ctx.fillRect(70, 70, 260, 58);
@@ -205,7 +215,7 @@ export function StudioWorkspace() {
             disabled={loading}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#facc15] px-5 py-4 font-black text-zinc-950 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.98]"
           >
-            {loading ? "Queued generation..." : "Generate 6 CTR angles"} <ArrowRight size={18} weight="bold" />
+            {loading ? "Queued generation..." : isSignedIn ? "Generate 6 CTR angles" : "Generate 1 free angle"} <ArrowRight size={18} weight="bold" />
           </button>
         </div>
       </aside>
@@ -237,7 +247,7 @@ export function StudioWorkspace() {
                     selected === index ? "rounded-[1.85rem] ring-2 ring-[#facc15]" : ""
                   }`}
                 >
-                  <ThumbnailCard thumb={thumb} overlay={overlay} watermark={index === 0} compact />
+                  <ThumbnailCard thumb={thumb} overlay={overlay} fontFamily={canvasFontMap[selectedFont] || canvasFontMap.Impact} watermark={index === 0} compact />
                 </button>
               ))}
             </div>
@@ -257,10 +267,19 @@ export function StudioWorkspace() {
                 onChange={(event) => setOverlay(event.target.value)}
                 className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm outline-none focus:border-[#facc15]"
               />
+              <span className={`mt-2 block text-xs font-bold ${overlayWordCount > 6 ? "text-amber-300" : "text-white/45"}`}>
+                {overlayWarning}
+              </span>
             </label>
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs font-bold text-white/60">
               {fontPresets.map((font) => (
-                <button key={font} className="rounded-xl border border-white/10 px-3 py-2 hover:bg-white/10">
+                <button
+                  key={font}
+                  type="button"
+                  onClick={() => setSelectedFont(font)}
+                  className={`rounded-xl border px-3 py-2 hover:bg-white/10 ${selectedFont === font ? "border-[#facc15] bg-[#facc15]/15 text-white" : "border-white/10"}`}
+                  style={{ fontFamily: canvasFontMap[font] || canvasFontMap.Impact }}
+                >
                   {font}
                 </button>
               ))}
