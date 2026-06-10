@@ -89,6 +89,48 @@ test("strict production health rejects localhost and test-mode provider keys", (
   ]);
 });
 
+test("strict production health can allow linked test-mode provider keys for staging readiness", () => {
+  const health = evaluateProductionHealth(
+    {
+      NEXT_PUBLIC_APP_URL: "https://thumbboost.example",
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_123",
+      CLERK_SECRET_KEY: "sk_test_123",
+      CONVEX_URL: "https://example.convex.cloud",
+      OPENAI_API_KEY: "sk-real",
+      STRIPE_SECRET_KEY: "sk_test_123",
+      STRIPE_BASIC_PRICE_ID: "price_basic",
+      STRIPE_PRO_PRICE_ID: "price_pro",
+      STRIPE_WEBHOOK_SECRET: "whsec_123",
+    },
+    { strictProduction: true, allowTestProviderKeys: true },
+  );
+
+  assert.equal(health.ok, true);
+  assert.deepEqual(health.invalidRequired, []);
+});
+
+test("strict production health still rejects localhost and OpenAI placeholders when test provider keys are allowed", () => {
+  const health = evaluateProductionHealth(
+    {
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000",
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_123",
+      CLERK_SECRET_KEY: "sk_test_123",
+      CONVEX_URL: "https://example.convex.cloud",
+      OPENAI_API_KEY: "sk-test",
+      STRIPE_SECRET_KEY: "sk_test_123",
+      STRIPE_BASIC_PRICE_ID: "price_basic",
+      STRIPE_PRO_PRICE_ID: "price_pro",
+      STRIPE_WEBHOOK_SECRET: "whsec_123",
+    },
+    { strictProduction: true, allowTestProviderKeys: true },
+  );
+
+  assert.deepEqual(health.invalidRequired.sort(), [
+    "NEXT_PUBLIC_APP_URL must be an https production URL",
+    "OPENAI_API_KEY must not be the placeholder sk-test value",
+  ]);
+});
+
 test("strict production health rejects malformed service URLs", () => {
   const health = evaluateProductionHealth(
     {
