@@ -32,7 +32,7 @@ Generic AI thumbnail generators are crowded. Pikzels positions around YouTube pa
 - Stripe Customer Portal API route: `/api/stripe/portal`
 - Stripe webhook API route: `/api/webhooks/stripe` with duplicate event tracking and subscription-status-aware plan updates
 - Privacy and Terms pages linked in the footer
-- Health, sitemap, and robots routes; `/api/health` reports missing launch-critical environment variables with HTTP 503
+- Health, readiness, sitemap, and robots routes; `/api/health` is deployment liveness and `/api/readiness` reports launch-critical environment issues with HTTP 503
 - Convex schema and functions in `convex/`
 - Clerk + Convex provider bridge in `src/components/app-providers.tsx`
 
@@ -53,6 +53,7 @@ npm run preflight
 npm run build
 PORT=3000 npm start
 curl http://127.0.0.1:3000/api/health
+curl http://127.0.0.1:3000/api/readiness
 ```
 
-`npm run preflight` is the strict launch gate: it rejects missing env, localhost app URLs, malformed service URLs, and test-mode Clerk/Stripe keys. `/api/health` returns `503` until required Clerk, Convex, Stripe, OpenAI, and app URL variables are configured. `YOUTUBE_API_KEY` is optional and is reported separately. Server-side Convex calls use `CONVEX_URL` first and fall back to `NEXT_PUBLIC_CONVEX_URL`.
+`npm run preflight` is the strict launch gate: it rejects missing env, localhost app URLs, malformed service URLs, and test-mode Clerk/Stripe keys. `/api/health` returns HTTP 200 when the Next.js process is alive so deployment health checks do not roll back a bootable app. `/api/readiness` returns `503` until required Clerk, Convex, Stripe, OpenAI, and app URL variables are configured for launch. `YOUTUBE_API_KEY` is optional and is reported separately. Server-side Convex calls use `CONVEX_URL` first and fall back to `NEXT_PUBLIC_CONVEX_URL`.

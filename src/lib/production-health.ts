@@ -15,6 +15,8 @@ const requiredEnv = [
 const optionalEnv = ["YOUTUBE_API_KEY"] as const;
 
 type Env = Record<string, string | undefined>;
+type Health = ReturnType<typeof evaluateProductionHealth>;
+type HealthMode = "liveness" | "readiness";
 
 function missing(keys: readonly string[], env: Env) {
   return keys.filter((key) => !env[key as keyof Env]?.trim());
@@ -79,4 +81,8 @@ export function evaluateProductionHealth(env: Env = process.env, options: { stri
     invalidRequired,
     missingOptional,
   };
+}
+
+export function healthHttpStatus(health: Health, mode: HealthMode = "readiness") {
+  return mode === "liveness" ? 200 : health.status;
 }

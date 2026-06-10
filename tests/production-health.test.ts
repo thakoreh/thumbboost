@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateProductionHealth } from "../src/lib/production-health.ts";
+import { evaluateProductionHealth, healthHttpStatus } from "../src/lib/production-health.ts";
 
 test("production health reports missing launch-critical environment variables", () => {
   const health = evaluateProductionHealth({
@@ -109,4 +109,12 @@ test("strict production health rejects malformed service URLs", () => {
 
   assert.equal(health.ok, false);
   assert.deepEqual(health.invalidRequired.sort(), ["CLERK_JWT_ISSUER_DOMAIN must be a valid URL", "CONVEX_URL must be a valid URL"]);
+});
+
+test("health status supports separate liveness and readiness checks", () => {
+  const health = evaluateProductionHealth({}, { strictProduction: true });
+
+  assert.equal(health.status, 503);
+  assert.equal(healthHttpStatus(health, "liveness"), 200);
+  assert.equal(healthHttpStatus(health, "readiness"), 503);
 });
