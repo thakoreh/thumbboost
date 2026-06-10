@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as rateLimits from "../rateLimits.js";
 import type * as thumbnails from "../thumbnails.js";
 import type * as users from "../users.js";
 
@@ -18,6 +19,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  rateLimits: typeof rateLimits;
   thumbnails: typeof thumbnails;
   users: typeof users;
 }>;

@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "preflight": "NODE_OPTIONS='--experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON' node scripts/preflight.mjs",
+    "test": "NODE_OPTIONS='--experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON' node --test 'tests/**/*.test.ts'",
+    "start": "rm -rf .next/standalone/.next/static .next/standalone/public && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && node .next/standalone/server.js",
     "lint": "eslint"
   },
   "dependencies": {

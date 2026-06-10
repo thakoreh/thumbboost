@@ -15,7 +15,7 @@ export default function PricingPage() {
             Pricing for pre-publish packaging decisions.
           </h1>
           <p className="mt-5 text-lg leading-8 text-zinc-600">
-            Start with a free packaging check, then upgrade when you need unlimited experiments, clean exports, reusable styles, and creator history.
+            Start with a free packaging check, then upgrade when you need watermark-free exports, saved history, and self-service billing.
           </p>
         </div>
         <div className="mt-10 grid gap-5 lg:grid-cols-3">

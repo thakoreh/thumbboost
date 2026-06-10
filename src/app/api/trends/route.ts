@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { ConvexHttpClient } from "convex/browser";
+import { runtimeEnv, serverConvexUrl } from "@/lib/env";
+import { serverRateLimit } from "@/lib/rate-limit";
+import { api } from "../../../../convex/_generated/api";
 
 const fallback = {
   niche: "creator tech",
@@ -12,13 +15,26 @@ const fallback = {
   ],
 };
 
+async function checkSharedRateLimit(input: { key: string; max: number; windowMs: number }) {
+  const convexUrl = serverConvexUrl();
+  if (!convexUrl) throw new Error("convex_not_configured");
+  const convex = new ConvexHttpClient(convexUrl);
+  return await convex.mutation(api.rateLimits.check, input);
+}
+
 export async function GET(request: NextRequest) {
   const niche = request.nextUrl.searchParams.get("niche") || fallback.niche;
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || "local";
-  const limit = rateLimit(`trends:${ip}`, 30, 60 * 60 * 1000);
+  const limit = await serverRateLimit({
+    key: `trends:${ip}`,
+    max: 30,
+    windowMs: 60 * 60 * 1000,
+    checkSharedLimit: serverConvexUrl() ? checkSharedRateLimit : undefined,
+  });
   if (!limit.ok) return NextResponse.json({ ok: false, error: "rate_limited" }, { status: 429 });
 
-  if (!process.env.YOUTUBE_API_KEY) {
+  const youtubeApiKey = runtimeEnv("YOUTUBE_API_KEY");
+  if (!youtubeApiKey) {
     return NextResponse.json({ ok: true, provider: "mock", ...fallback, niche });
   }
 
@@ -26,7 +42,7 @@ export async function GET(request: NextRequest) {
   url.searchParams.set("part", "snippet,statistics");
   url.searchParams.set("chart", "mostPopular");
   url.searchParams.set("maxResults", "12");
-  url.searchParams.set("key", process.env.YOUTUBE_API_KEY);
+  url.searchParams.set("key", youtubeApiKey);
 
   const response = await fetch(url);
   if (!response.ok) return NextResponse.json({ ok: true, provider: "fallback", ...fallback, niche });

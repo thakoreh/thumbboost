@@ -2,31 +2,36 @@ import Stripe from "stripe";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
+import { isPlanId, planFromBillingSignal } from "@/lib/billing";
+import { runtimeEnv, serverConvexUrl } from "@/lib/env";
 import { planForPriceId, type PlanId } from "@/lib/plans";
 
 function convexClient() {
-  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  const url = serverConvexUrl();
   if (!url) return null;
   return new ConvexHttpClient(url);
 }
 
 function subscriptionPlan(subscription: Stripe.Subscription): PlanId | null {
   const priceId = subscription.items.data[0]?.price.id;
-  return planForPriceId(priceId) ?? (subscription.metadata.appPlan as PlanId | undefined) ?? null;
+  const metadataPlan = subscription.metadata.appPlan;
+  return planForPriceId(priceId) ?? (isPlanId(metadataPlan) ? metadataPlan : null);
 }
 
 export async function POST(request: NextRequest) {
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  const stripeSecretKey = runtimeEnv("STRIPE_SECRET_KEY");
+  const stripeWebhookSecret = runtimeEnv("STRIPE_WEBHOOK_SECRET");
+  if (!stripeSecretKey || !stripeWebhookSecret) {
     return NextResponse.json({ ok: false, error: "stripe_webhook_not_configured" }, { status: 503 });
   }
   const signature = request.headers.get("stripe-signature");
   if (!signature) return NextResponse.json({ ok: false, error: "Missing Stripe signature" }, { status: 400 });
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-05-27.dahlia" });
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-05-27.dahlia" });
   const rawBody = await request.text();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(rawBody, signature, stripeWebhookSecret);
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid Stripe signature" }, { status: 400 });
   }
@@ -34,26 +39,36 @@ export async function POST(request: NextRequest) {
   const convex = convexClient();
   if (!convex) return NextResponse.json({ ok: false, error: "convex_not_configured" }, { status: 503 });
   try {
+    const alreadyProcessed = await convex.query(api.users.hasProcessedStripeEvent, { eventId: event.id });
+    if (alreadyProcessed) {
+      return NextResponse.json({ ok: true, received: true, duplicate: true });
+    }
+
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const plan = (session.metadata?.appPlan as PlanId | undefined) ?? "basic";
+      const metadataPlan = session.metadata?.appPlan;
+      const plan = isPlanId(metadataPlan) ? metadataPlan : "basic";
       await convex?.mutation(api.users.updateBilling, {
         email: session.customer_details?.email ?? session.customer_email ?? session.metadata?.email ?? undefined,
         clerkUserId: session.metadata?.clerkUserId || undefined,
         stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
         stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
+        stripeSubscriptionStatus: "checkout_completed",
         plan,
       });
     }
 
     if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
-      const plan = subscriptionPlan(subscription) ?? "basic";
+      const priceId = subscription.items.data[0]?.price.id;
+      const plan = planFromBillingSignal({ status: subscription.status, candidatePlan: subscriptionPlan(subscription) });
       await convex?.mutation(api.users.updateBilling, {
         email: subscription.metadata.email || undefined,
         clerkUserId: subscription.metadata.clerkUserId || undefined,
         stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : undefined,
         stripeSubscriptionId: subscription.id,
+        stripeSubscriptionStatus: subscription.status,
+        stripePriceId: priceId,
         plan,
       });
     }
@@ -65,9 +80,16 @@ export async function POST(request: NextRequest) {
         clerkUserId: subscription.metadata.clerkUserId || undefined,
         stripeCustomerId: typeof subscription.customer === "string" ? subscription.customer : undefined,
         stripeSubscriptionId: subscription.id,
+        stripeSubscriptionStatus: subscription.status || "deleted",
+        stripePriceId: subscription.items.data[0]?.price.id,
         plan: "free",
       });
     }
+    await convex.mutation(api.users.recordProcessedStripeEvent, {
+      eventId: event.id,
+      type: event.type,
+      createdAt: event.created,
+    });
   } catch (error) {
     console.error("stripe_webhook_sync_failed", error);
     return NextResponse.json({ ok: false, error: "billing_sync_failed" }, { status: 500 });

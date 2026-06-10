@@ -11,6 +11,8 @@ export default defineSchema({
     lastUsageReset: v.number(),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
+    stripePriceId: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk_user_id", ["clerkUserId"]).index("by_email", ["email"]).index("by_stripe_customer_id", ["stripeCustomerId"]),
@@ -45,4 +47,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]).index("by_status", ["status"]),
+
+  rateLimitBuckets: defineTable({
+    key: v.string(),
+    count: v.number(),
+    resetAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]).index("by_reset_at", ["resetAt"]),
+
+  stripeEvents: defineTable({
+    eventId: v.string(),
+    type: v.string(),
+    createdAt: v.number(),
+    processedAt: v.number(),
+  }).index("by_event_id", ["eventId"]),
 });

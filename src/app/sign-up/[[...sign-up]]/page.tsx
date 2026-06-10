@@ -1,8 +1,11 @@
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
+import { isClerkConfigured } from "@/lib/auth-config";
 import { SparkleIcon } from "@/components/static-icons";
 
 export default function SignUpPage() {
+  const authReady = isClerkConfigured();
+
   return (
     <div className="grid min-h-screen bg-[#f4f6f8] text-zinc-950 lg:grid-cols-[0.9fr_1.1fr]">
       <section className="flex flex-col justify-between bg-[#111318] p-8 text-white lg:p-12">
@@ -19,7 +22,17 @@ export default function SignUpPage() {
         <p className="text-sm text-white/45">Five free watermarked thumbnails each month.</p>
       </section>
       <section className="flex items-center justify-center p-6">
-        <SignUp />
+        {authReady ? (
+          <SignUp />
+        ) : (
+          <div className="max-w-md rounded-3xl border border-zinc-200 bg-white p-6 text-center shadow-sm">
+            <h2 className="text-2xl font-black tracking-tight">Account creation is not configured yet.</h2>
+            <p className="mt-3 leading-7 text-zinc-600">Set the Clerk publishable and secret keys before enabling saved projects and paid plans.</p>
+            <Link href="/studio" className="mt-6 inline-flex rounded-full bg-zinc-950 px-5 py-3 font-black text-white">
+              Try the demo studio
+            </Link>
+          </div>
+        )}
       </section>
     </div>
   );

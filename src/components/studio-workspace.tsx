@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
@@ -7,13 +8,14 @@ import {
   ArrowRight,
   ChartLineUp,
   ClockCounterClockwise,
+  CreditCard,
   DownloadSimple,
   MagicWand,
   PaintBrush,
-  UploadSimple,
 } from "@phosphor-icons/react";
 import { api } from "../../convex/_generated/api";
 import { makeThumbs, sampleThumbs, scorePrompt, trendSignals, type Thumb } from "@/lib/thumbboost-content";
+import { shouldWatermarkExport } from "@/lib/plans";
 import { ThumbnailCard } from "@/components/thumbnail-card";
 
 const fontPresets = ["Impact", "Anton", "Bebas", "Geist"];
@@ -38,6 +40,8 @@ export function StudioWorkspace() {
   const [selectedFont, setSelectedFont] = useState("Impact");
   const [selected, setSelected] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationNotice, setGenerationNotice] = useState<string | null>(null);
   const [thumbs, setThumbs] = useState<Thumb[]>(sampleThumbs);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -53,6 +57,8 @@ export function StudioWorkspace() {
   async function generate() {
     if (![title, description, keywords].some((value) => value.trim().length > 0)) return;
     setLoading(true);
+    setGenerationError(null);
+    setGenerationNotice(null);
     const generated = makeThumbs(title, channel, keywords);
     try {
       const response = await fetch("/api/generate", {
@@ -61,8 +67,26 @@ export function StudioWorkspace() {
         body: JSON.stringify({ title, description, channel, keywords, variations: 6 }),
       });
       const data = await response.json();
+      if (!response.ok || data.ok === false) {
+        const messages: Record<string, string> = {
+          quota_exceeded: "Monthly free thumbnail quota reached. Upgrade to keep generating.",
+          rate_limited: "Generation is temporarily rate-limited. Try again after the reset window.",
+          convex_not_configured: "Project storage is not configured for signed-in generation.",
+          convex_auth_unavailable: "Your account session could not authorize project storage. Sign out and back in.",
+          quota_service_unavailable: "Usage tracking is temporarily unavailable. Try again shortly.",
+          missing_video_context: "Add a title, description, or keyword before generating.",
+          image_generation_failed: "Live image generation failed before any quota was charged. Please try again shortly.",
+        };
+        setGenerationError(messages[data.error as string] || "Generation failed. Try again with a shorter prompt.");
+        return;
+      }
       const nextThumbs: Thumb[] = data.thumbnails?.length ? data.thumbnails : generated;
       setThumbs(nextThumbs);
+      if (data.provider === "fallback") {
+        setGenerationNotice("Fallback previews shown because live image generation is unavailable.");
+      } else if (data.quota?.remaining !== null && data.quota?.remaining !== undefined) {
+        setGenerationNotice(`${data.quota.remaining} free thumbnails remain this month.`);
+      }
       if (isSignedIn) {
         createProject({
           title,
@@ -78,7 +102,7 @@ export function StudioWorkspace() {
         }).catch(() => undefined);
       }
     } catch {
-      setThumbs(generated);
+      setGenerationError("Generation service is unreachable. Please try again shortly.");
     } finally {
       setSelected(0);
       setLoading(false);
@@ -156,7 +180,7 @@ export function StudioWorkspace() {
     ctx.fillRect(1010, 650, 220, 38);
     ctx.fillStyle = "#ffffff";
     ctx.font = "700 22px Arial";
-    ctx.fillText(currentUser?.plan === "free" ? "ThumbBoost free" : "ThumbBoost", 1030, 676);
+    ctx.fillText(shouldWatermarkExport(currentUser?.plan) ? "ThumbBoost free" : "ThumbBoost", 1030, 676);
     const link = document.createElement("a");
     link.download = "thumbboost-thumbnail.png";
     link.href = canvas.toDataURL("image/png");
@@ -207,9 +231,6 @@ export function StudioWorkspace() {
               className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm outline-none transition focus:border-[#facc15]"
             />
           </label>
-          <button className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.04] px-4 py-3 text-sm font-bold text-white/65">
-            <UploadSimple size={17} /> Optional reference image
-          </button>
           <button
             onClick={generate}
             disabled={loading}
@@ -217,6 +238,15 @@ export function StudioWorkspace() {
           >
             {loading ? "Queued generation..." : isSignedIn ? "Generate 6 CTR angles" : "Generate 1 free angle"} <ArrowRight size={18} weight="bold" />
           </button>
+          {generationError ? (
+            <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-bold leading-5 text-red-100">
+              {generationError}
+            </div>
+          ) : generationNotice ? (
+            <div className="rounded-2xl border border-emerald-300/25 bg-emerald-400/10 px-4 py-3 text-sm font-bold leading-5 text-emerald-100">
+              {generationNotice}
+            </div>
+          ) : null}
         </div>
       </aside>
 
@@ -310,6 +340,14 @@ export function StudioWorkspace() {
             <p className="text-sm text-white/55">
               {currentUser ? `${currentUser.plan.toUpperCase()} plan - ${currentUser.thumbnailsThisMonth} thumbnails this month` : "Sign up to save every generation."}
             </p>
+            {currentUser?.plan === "basic" || currentUser?.plan === "pro" ? (
+              <Link
+                href="/api/stripe/portal"
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white px-4 py-3 text-sm font-black text-zinc-950 transition active:scale-[0.98]"
+              >
+                <CreditCard size={17} weight="bold" /> Manage billing
+              </Link>
+            ) : null}
             <div className="mt-4 space-y-3">
               {history === undefined ? (
                 <div className="h-16 animate-pulse rounded-2xl bg-white/10" />

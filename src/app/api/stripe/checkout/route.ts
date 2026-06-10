@@ -1,31 +1,25 @@
 import Stripe from "stripe";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
-import { getPlan } from "@/lib/plans";
-
-function publicOrigin(request: NextRequest) {
-  const configured = process.env.NEXT_PUBLIC_APP_URL;
-  if (configured && !configured.includes("localhost")) return configured.replace(/\/$/, "");
-  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || request.nextUrl.host;
-  const proto = request.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
-}
+import { hasClerkSecret } from "@/lib/auth-config";
+import { runtimeEnv } from "@/lib/env";
+import { publicOrigin } from "@/lib/origin";
+import { checkoutPlanId, getPlan } from "@/lib/plans";
 
 export async function GET(request: NextRequest) {
-  const planId = request.nextUrl.searchParams.get("plan");
-  const validIds = ["free", "basic", "pro"];
-  if (!planId || !validIds.includes(planId)) {
+  const planId = checkoutPlanId(request.nextUrl.searchParams.get("plan"));
+  if (!planId) {
     return NextResponse.json({ ok: false, error: "invalid_plan" }, { status: 400 });
   }
   const plan = getPlan(planId);
 
-  if (plan.id === "free") {
-    return NextResponse.redirect(new URL("/?onboarding=free", request.url));
-  }
-
-  const price = plan.priceEnv ? process.env[plan.priceEnv] : undefined;
-  if (!process.env.STRIPE_SECRET_KEY || !price) {
+  const price = plan.priceEnv ? runtimeEnv(plan.priceEnv) : undefined;
+  const stripeSecretKey = runtimeEnv("STRIPE_SECRET_KEY");
+  if (!stripeSecretKey || !price) {
     return NextResponse.json({ ok: false, error: "stripe_not_configured" }, { status: 503 });
+  }
+  if (!hasClerkSecret()) {
+    return NextResponse.json({ ok: false, error: "auth_not_configured" }, { status: 503 });
   }
 
   const { userId } = await auth();
@@ -37,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
   const user = await currentUser().catch(() => null);
   const email = user?.emailAddresses?.[0]?.emailAddress;
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-05-27.dahlia" });
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-05-27.dahlia" });
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price, quantity: 1 }],

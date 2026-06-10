@@ -73,7 +73,6 @@ export const createProject = mutation({
       score: variation.score,
       watermarked,
     }));
-    await ctx.db.patch(user._id, { thumbnailsThisMonth: user.thumbnailsThisMonth + variationPayload.length, updatedAt: now });
     return await ctx.db.insert("thumbnailProjects", {
       userId: user._id,
       title: args.title,

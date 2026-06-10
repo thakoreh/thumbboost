@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { evaluateProductionHealth } from "@/lib/production-health";
 
 export function GET() {
-  return NextResponse.json({ ok: true, service: "thumbboost", ts: new Date().toISOString() });
+  const health = evaluateProductionHealth();
+  return NextResponse.json({ ...health, ts: new Date().toISOString() }, { status: health.status });
 }
