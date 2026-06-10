@@ -1,12 +1,19 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextFetchEvent, NextRequest, NextResponse } from "next/server";
 import { hasClerkSecret } from "@/lib/auth-config";
+import { authRoutes } from "@/lib/auth-routes";
 
 const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
 
-const clerkProxy = clerkMiddleware(async (auth, request) => {
-  if (isProtectedRoute(request)) await auth.protect();
-});
+const clerkProxy = clerkMiddleware(
+  async (auth, request) => {
+    if (isProtectedRoute(request)) await auth.protect();
+  },
+  {
+    signInUrl: authRoutes.signInUrl,
+    signUpUrl: authRoutes.signUpUrl,
+  },
+);
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (!hasClerkSecret()) return NextResponse.next();

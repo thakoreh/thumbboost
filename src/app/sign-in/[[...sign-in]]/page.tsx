@@ -1,6 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { isClerkConfigured } from "@/lib/auth-config";
+import { authRoutes } from "@/lib/auth-routes";
 import { SparkleIcon } from "@/components/static-icons";
 
 export default function SignInPage() {
@@ -23,7 +24,12 @@ export default function SignInPage() {
       </section>
       <section className="flex items-center justify-center p-6">
         {authReady ? (
-          <SignIn />
+          <SignIn
+            path={authRoutes.signInUrl}
+            routing="path"
+            signUpUrl={authRoutes.signUpUrl}
+            fallbackRedirectUrl={authRoutes.fallbackRedirectUrl}
+          />
         ) : (
           <div className="max-w-md rounded-3xl border border-zinc-200 bg-white p-6 text-center shadow-sm">
             <h2 className="text-2xl font-black tracking-tight">Authentication is not configured yet.</h2>
