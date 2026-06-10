@@ -3,6 +3,14 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getPlan } from "@/lib/plans";
 
+function publicOrigin(request: NextRequest) {
+  const configured = process.env.NEXT_PUBLIC_APP_URL;
+  if (configured && !configured.includes("localhost")) return configured.replace(/\/$/, "");
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || request.nextUrl.host;
+  const proto = request.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
 export async function GET(request: NextRequest) {
   const planId = request.nextUrl.searchParams.get("plan");
   const validIds = ["free", "basic", "pro"];
@@ -21,14 +29,14 @@ export async function GET(request: NextRequest) {
   }
 
   const { userId } = await auth();
+  const origin = publicOrigin(request);
   if (!userId) {
-    const redirectUrl = new URL("/sign-in", request.url);
+    const redirectUrl = new URL("/sign-in", origin);
     redirectUrl.searchParams.set("redirect_url", `/api/stripe/checkout?plan=${plan.id}`);
     return NextResponse.redirect(redirectUrl, 307);
   }
   const user = await currentUser().catch(() => null);
   const email = user?.emailAddresses?.[0]?.emailAddress;
-  const origin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-05-27.dahlia" });
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
