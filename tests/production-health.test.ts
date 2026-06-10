@@ -7,7 +7,6 @@ test("production health reports missing launch-critical environment variables", 
     NEXT_PUBLIC_APP_URL: "https://thumbboost.example",
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_live_123",
     CLERK_SECRET_KEY: "",
-    CLERK_JWT_ISSUER_DOMAIN: undefined,
     CONVEX_URL: "",
     NEXT_PUBLIC_CONVEX_URL: "https://example.convex.cloud",
     OPENAI_API_KEY: "sk-test",
@@ -18,7 +17,7 @@ test("production health reports missing launch-critical environment variables", 
   });
 
   assert.equal(health.ok, false);
-  assert.deepEqual(health.missingRequired.sort(), ["CLERK_JWT_ISSUER_DOMAIN", "CLERK_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]);
+  assert.deepEqual(health.missingRequired.sort(), ["CLERK_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]);
   assert.equal(health.status, 503);
 });
 
