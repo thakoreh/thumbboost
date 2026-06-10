@@ -34,6 +34,10 @@ function imageUrlFromResult(image: { url?: string | null; b64_json?: string | nu
   return undefined;
 }
 
+function liveVariationCount(model: string, variations: number) {
+  return model === "dall-e-3" ? 1 : variations;
+}
+
 async function reserveQuota(userId: string, getToken: (options?: { template?: string }) => Promise<string | null>, requestedVariations: number) {
   const convexUrl = serverConvexUrl();
   if (!convexUrl) {
@@ -128,31 +132,39 @@ export async function POST(request: NextRequest) {
   const size = model === "dall-e-3" ? "1792x1024" : "1536x1024";
 
   try {
-    const images = [];
-    for (let i = 0; i < variations; i += 1) {
-      const result = await openai.images.generate({
+    const liveImages = liveVariationCount(model, variations);
+    const result = await openai.images.generate(
+      {
         model,
-        prompt: `${prompt} Variation ${i + 1}: distinct composition and palette.`,
+        prompt: `${prompt} Create ${liveImages} distinct composition and palette variation${liveImages === 1 ? "" : "s"}.`,
         size,
-        n: 1,
-      });
-      images.push({
-        id: `openai-${Date.now()}-${i}`,
-        imageUrl: imageUrlFromResult(result.data?.[0]),
-        title,
-        subtitle: channel,
-        palette: fallbackPalettes[i % fallbackPalettes.length],
-        score: Math.min(97, 82 + i * 2),
-        style: `${model} generated`,
-        accent: "AI image",
-      });
-    }
+        n: liveImages,
+      },
+      {
+        maxRetries: 0,
+        signal: request.signal,
+        timeout: 90_000,
+      },
+    );
+    const images = (result.data || []).slice(0, variations).map((image, index) => ({
+      id: `openai-${Date.now()}-${index}`,
+      imageUrl: imageUrlFromResult(image),
+      title,
+      subtitle: channel,
+      palette: fallbackPalettes[index % fallbackPalettes.length],
+      score: Math.min(97, 82 + index * 2),
+      style: `${model} generated`,
+      accent: "AI image",
+    }));
+    if (!images.length) throw new Error("image_generation_returned_empty");
+    const unusedQuota = variations - images.length;
+    if (quota?.ok && unusedQuota > 0) await refundQuota(authState.getToken, unusedQuota);
 
     return NextResponse.json({
       ok: true,
       provider: "openai",
       model,
-      quota: quota?.ok ? { plan: quota.plan, remaining: quota.remaining, resetAt: quota.resetAt } : undefined,
+      quota: quota?.ok ? { plan: quota.plan, remaining: quota.remaining === null ? null : quota.remaining + Math.max(unusedQuota, 0), resetAt: quota.resetAt } : undefined,
       thumbnails: images,
     });
   } catch (error) {
