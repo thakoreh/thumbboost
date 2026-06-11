@@ -40,6 +40,14 @@ export function planFromBillingSignal({
   return "free";
 }
 
+export function planFromCheckoutMetadata(metadata?: {
+  product?: string | null;
+  appPlan?: string | null;
+}): Exclude<PlanId, "free"> | null {
+  if (metadata?.product !== "thumbboost") return null;
+  return metadata.appPlan === "basic" || metadata.appPlan === "pro" ? metadata.appPlan : null;
+}
+
 export function billingPortalReturnUrl(origin: string) {
   return `${origin.replace(/\/$/, "")}/studio?billing=portal_return`;
 }

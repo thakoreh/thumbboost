@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { billingPortalReturnUrl, canOpenBillingPortal, normalizeBillingIdentity, planFromBillingSignal } from "../src/lib/billing.ts";
+import {
+  billingPortalReturnUrl,
+  canOpenBillingPortal,
+  normalizeBillingIdentity,
+  planFromBillingSignal,
+  planFromCheckoutMetadata,
+} from "../src/lib/billing.ts";
 
 test("billing identity normalizes email and preserves Clerk linkage", () => {
   const identity = normalizeBillingIdentity({
@@ -45,6 +51,14 @@ test("inactive subscriptions downgrade to free", () => {
 test("billing plan metadata is validated before granting access", () => {
   assert.equal(planFromBillingSignal({ status: "active", candidatePlan: "enterprise" }), "free");
   assert.equal(planFromBillingSignal({ status: "active", candidatePlan: undefined }), "free");
+});
+
+test("checkout webhooks only grant paid plans for ThumbBoost checkout metadata", () => {
+  assert.equal(planFromCheckoutMetadata({ product: "thumbboost", appPlan: "basic" }), "basic");
+  assert.equal(planFromCheckoutMetadata({ product: "thumbboost", appPlan: "pro" }), "pro");
+  assert.equal(planFromCheckoutMetadata({ product: "other", appPlan: "basic" }), null);
+  assert.equal(planFromCheckoutMetadata({ product: "thumbboost", appPlan: "free" }), null);
+  assert.equal(planFromCheckoutMetadata({ product: "thumbboost" }), null);
 });
 
 test("billing portal return URL points back to the studio without double slashes", () => {

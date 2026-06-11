@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "../../../../../convex/_generated/api";
-import { isPlanId, planFromBillingSignal } from "@/lib/billing";
+import { isPlanId, planFromBillingSignal, planFromCheckoutMetadata } from "@/lib/billing";
 import { runtimeEnv, serverConvexUrl } from "@/lib/env";
 import { planForPriceId, type PlanId } from "@/lib/plans";
 
@@ -46,16 +46,20 @@ export async function POST(request: NextRequest) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-      const metadataPlan = session.metadata?.appPlan;
-      const plan = isPlanId(metadataPlan) ? metadataPlan : "basic";
-      await convex?.mutation(api.users.updateBilling, {
-        email: session.customer_details?.email ?? session.customer_email ?? session.metadata?.email ?? undefined,
-        clerkUserId: session.metadata?.clerkUserId || undefined,
-        stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
-        stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
-        stripeSubscriptionStatus: "checkout_completed",
-        plan,
+      const plan = planFromCheckoutMetadata({
+        product: session.metadata?.product,
+        appPlan: session.metadata?.appPlan,
       });
+      if (plan) {
+        await convex?.mutation(api.users.updateBilling, {
+          email: session.customer_details?.email ?? session.customer_email ?? session.metadata?.email ?? undefined,
+          clerkUserId: session.metadata?.clerkUserId || undefined,
+          stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
+          stripeSubscriptionId: typeof session.subscription === "string" ? session.subscription : undefined,
+          stripeSubscriptionStatus: "checkout_completed",
+          plan,
+        });
+      }
     }
 
     if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {

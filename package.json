@@ -7,6 +7,8 @@
     "build": "next build",
     "preflight": "NODE_OPTIONS='--experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON' node scripts/preflight.mjs",
     "test": "NODE_OPTIONS='--experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON' node --test 'tests/**/*.test.ts'",
+    "typecheck": "tsc --noEmit",
+    "ci": "npm run lint && npm run typecheck && npm test && npm run build",
     "start": "rm -rf .next/standalone/.next/static .next/standalone/public && mkdir -p .next/standalone/.next && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public && HOSTNAME=0.0.0.0 node .next/standalone/server.js",
     "lint": "eslint"
   },
